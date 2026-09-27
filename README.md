@@ -32,7 +32,7 @@ copybara migrate copy.bara.sky
 
 ### Included tools
 
-Java 21, Copybara, git, Mercurial, Quilt, OpenSSH client, buildifier, buildozer.
+Java 25, Copybara, git, Mercurial, Quilt, OpenSSH client, buildifier, buildozer.
 
 ### Override command
 
