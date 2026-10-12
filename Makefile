@@ -9,7 +9,7 @@ build:
 
 test:
 	docker run --rm --entrypoint java ${DOCKER_IMAGE}:${DOCKER_TAG} -version
-	docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} copybara help
+	docker run --rm ${DOCKER_IMAGE}:${DOCKER_TAG} help
 	docker run --rm -e COPYBARA_SUBCOMMAND=help ${DOCKER_IMAGE}:${DOCKER_TAG}
 
 run:
