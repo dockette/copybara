@@ -85,6 +85,11 @@ docker run --rm -it \
 - Copybara expects your config file, such as `copy.bara.sky`, to be available inside `/usr/src/app`.
 - Snapshot versions can be updated by changing `COPYBARA_VERSION` and `COPYBARA_SHA256` in `latest/Dockerfile`.
 
+## Versions
+
+The release version is the date in [`VERSION`](VERSION). CI pushes `latest` also as `dockette/copybara:<VERSION>`.
+To release, run `make release`, commit and push to `master`.
+
 ## Maintenance
 
 See [how to contribute](https://github.com/dockette/.github/blob/master/CONTRIBUTING.md) to this package. Consider to [support](https://github.com/sponsors/f3l1x) **f3l1x**. Thank you for using this package.
