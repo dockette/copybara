@@ -39,13 +39,16 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
+      copybara: ${{ steps.version.outputs.copybara }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Read VERSION
+      - name: Read VERSION and COPYBARA_VERSION
         id: version
-        run: echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
+          echo "copybara=$(sed -n 's/^ARG COPYBARA_VERSION=//p' latest/Dockerfile)" >> "$GITHUB_OUTPUT"
 
   build:
     name: "Build"
@@ -53,7 +56,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: ["latest", "${{ needs.version.outputs.version }}"]
+        # latest, <VERSION>, <COPYBARA_VERSION> and <COPYBARA_VERSION>-<VERSION>
+        tag:
+          - "latest"
+          - "${{ needs.version.outputs.version }}"
+          - "${{ needs.version.outputs.copybara }}"
+          - "${{ needs.version.outputs.copybara }}-${{ needs.version.outputs.version }}"
     uses: dockette/.github/.github/workflows/docker.yml@master
     secrets: inherit
     with:
@@ -75,7 +83,10 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "$(cat VERSION)" || gh release create "$(cat VERSION)" --generate-notes
+        run: |
+          v="$(cat VERSION)"
+          u="$(sed -n 's/^ARG COPYBARA_VERSION=//p' latest/Dockerfile)"
+          gh release view "$v" || gh release create "$v" --title "$v (Copybara $u)" --generate-notes
 
   docs:
     name: "Docs"

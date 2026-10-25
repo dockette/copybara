@@ -87,8 +87,17 @@ docker run --rm -it \
 
 ## Versions
 
-The release version is the date in [`VERSION`](VERSION). CI pushes `latest` also as `dockette/copybara:<VERSION>`.
-To release, run `make release`, commit and push to `master`.
+The release version is the date in [`VERSION`](VERSION). The Copybara version is pinned in the `Dockerfile`
+(`COPYBARA_VERSION`). On `master`, CI pushes the image under four tags:
+
+| Tag | What it is |
+|-----|------------|
+| `dockette/copybara:latest` | latest build of `master` |
+| `dockette/copybara:2026.10.23` | release `2026.10.23` |
+| `dockette/copybara:v20260921` | latest build with Copybara `v20260921` |
+| `dockette/copybara:v20260921-2026.10.23` | Copybara `v20260921` in release `2026.10.23`; pin this one |
+
+To release, run `make release`, commit and push to `master`. An upstream upgrade is a release too.
 
 ## Maintenance
 
