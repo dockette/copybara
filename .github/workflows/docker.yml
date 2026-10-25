@@ -34,40 +34,44 @@ jobs:
       - name: "Test image"
         run: "make test"
 
-  version:
-    name: "Version"
+  build:
+    name: "Build"
+    needs: test
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      copybara: ${{ steps.version.outputs.copybara }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Read VERSION and COPYBARA_VERSION
+      - name: Read VERSION
         id: version
-        run: |
-          echo "version=$(cat VERSION)" >> "$GITHUB_OUTPUT"
-          echo "copybara=$(sed -n 's/^ARG COPYBARA_VERSION=//p' latest/Dockerfile)" >> "$GITHUB_OUTPUT"
+        run: cat VERSION >> "$GITHUB_OUTPUT"
 
-  build:
-    name: "Build"
-    needs: ["test", "version"]
-    strategy:
-      fail-fast: false
-      matrix:
-        # latest, <VERSION>, <COPYBARA_VERSION> and <COPYBARA_VERSION>-<VERSION>
-        tag:
-          - "latest"
-          - "${{ needs.version.outputs.version }}"
-          - "${{ needs.version.outputs.copybara }}"
-          - "${{ needs.version.outputs.copybara }}-${{ needs.version.outputs.version }}"
-    uses: dockette/.github/.github/workflows/docker.yml@master
-    secrets: inherit
-    with:
-      image: "dockette/copybara"
-      tag: ${{ matrix.tag }}
-      context: "latest"
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to DockerHub
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: latest
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.ref == 'refs/heads/master' }}
+          tags: |
+            dockette/copybara:latest
+            dockette/copybara:${{ steps.version.outputs.VERSION }}
+            dockette/copybara:${{ steps.version.outputs.COPYBARA_VERSION }}
+            dockette/copybara:${{ steps.version.outputs.COPYBARA_VERSION }}-${{ steps.version.outputs.VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   release:
     name: "Release"
@@ -84,9 +88,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          v="$(cat VERSION)"
-          u="$(sed -n 's/^ARG COPYBARA_VERSION=//p' latest/Dockerfile)"
-          gh release view "$v" || gh release create "$v" --title "$v (Copybara $u)" --generate-notes
+          . ./VERSION
+          gh release view "$VERSION" || gh release create "$VERSION" --generate-notes
 
   docs:
     name: "Docs"
